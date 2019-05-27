@@ -101,7 +101,7 @@ str(totalData)
 summary(totalData)
 ```
 
-
+## Nulos y/o elementos vacíos
 Comprobamos que no haya valores vacíos o nulos.
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
@@ -109,13 +109,46 @@ Comprobamos que no haya valores vacíos o nulos.
 colSums(is.na(totalData))
 colSums(totalData=="")
 ```
+## Valores extremos
 
-# Análisis de los datos
+En el resumen descriptivo pudimos observar tanto en el grupo vinos tintos como en el de blancos, los valores máximos de dioxido de azufre total parecen muy distantes de sus medidas de tencencia central. Vamos a identificarlos de manera gráfica con un diagrama box plot.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# comprobamos outliers en dioxido de azufre total en los blancos
+#ggplot(totalData, aes(x=tipo, y=diox_azufre_total)) +  geom_point(size=2, shape=23)
+datos.bp <-boxplot(blanco$diox_azufre_total, main="Blancos - Dioxido azufre total", horizontal = T)
+```
 
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
-summary(totalData$calidad)
+# comprobamos outliers en dioxido de azufre total en los tintos
+datos.bp <-boxplot(tinto$diox_azufre_total, main="Tintos - Dioxido azufre total", horizontal = T)
 ```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+boxplot.stats(blanco$diox_azufre_total)$out
+boxplot.stats(tinto$diox_azufre_total)$out
+```
+
+Vemos que el sistema detecta 20 valores atípicos en los vinos blancos y 56 en los tintos. No tenemos un conocimiento suficiente para valorar si se han producido por errores o por diferentes metodologías de medición o si por el contrario, son valores correctos por lo que vamos solamente vamos a sacar de la muestra los que están más alejados del rango intercuartílico. 
+
+De la muestra total sacamos el que tiene un valor > 400 y es blanco y de la de tintos los dos que tienen un valor superior a 250.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+blanco <-subset(blanco, diox_azufre_total<400)
+tinto <- subset(tinto, diox_azufre_total<250)
+totalData <- bind_rows(blanco,tinto)
+filas=dim(totalData)[1]
+# Factorizamos la variable tipo
+totalData$tipo <- as.factor(totalData$tipo)
+
+
+#☺totalData <- subset(totalData, (tipo=="B"& diox_azufre_total < 400) | (tipo == "T" & diox_azufre_total < 250))
+ggplot(totalData, aes(x=tipo, y=diox_azufre_total)) +  geom_point(size=2, shape=23)
+```
+
+
+# Análisis de los datos
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 
@@ -132,22 +165,8 @@ ggplot(data = totalData[1:filas,],aes(x=calidad,fill=tipo))+geom_bar(position="f
 Se puede deducir de los gráficos que los vinos blancos de la muestra tienen más calidad que los tintos.  
 
 
-En el resumen descriptivo pudimos observar tres posibles outliers; en el grupo de vinos tintos, hay dos observaciones con el valor en dioxido de azufre total muy distante de sus medidas de tencencia central, y una en el grupo de vinos blancos. 
 
-```{r echo=TRUE, message=FALSE, warning=FALSE}
-# comprobamos outliers en dioxido de azufre total
-ggplot(totalData, aes(x=tipo, y=diox_azufre_total)) +  geom_point(size=2, shape=23)
-```
-
-Vamos a sacar de la muestra esas tres observaciones.
-
-```{r echo=TRUE, message=FALSE, warning=FALSE}
-totalData <- subset(totalData, (tipo=="B"& diox_azufre_total < 400) | (tipo == "T" & diox_azufre_total < 200))
-ggplot(totalData, aes(x=tipo, y=diox_azufre_total)) +  geom_point(size=2, shape=23)
-```
-
-
-# Comparación de los dos grupos de vinos.
+## Análisis de la normalidad y homogeneidad de la varianza
 
 
 Vamos a comprobar la normalidad de la calidad en ambos grupos de vinos. Utilizaremos los tests de **Kolmogorov-Smirnov** y **Shapiro-Wilk**
@@ -164,17 +183,16 @@ shapiro.test(blanco$calidad)
 En ambos test se rechaza la hipótesis nula, por tanto consideramos que la calidad no se distribuye mediante una distribución normal en ninguno de los dos grupos. No obstante, por el **teorema central del límite** se podría considerar que los datos siguen una distribución normal.
 
 
-Comprobación de la homocedasticidad de ambos grupos. Utilizaremos el test de **Flinger-Killen**
-
+Analizaremos la homocedasticidad de la varianza mediante el **test de Flinger-Killen** en cuanto a los grupos conformados por los vinos tintos y los blancos.  
 
 ```{r message= FALSE, warning=FALSE}
 ##
 b <- blanco$calidad
 t <- tinto$calidad
-fligner.test(x = list(b,t))
-
+fligner.test(calidad ~ tipo, data= totalData)
 ```
-Dado que el p-valor es > 0.05 podemos aceptar la hipóstesis nula de homocedasticidad.
+Dado que el p-valor es > 0.05 podemos aceptar la hipóstesis nula de que las varianzas de ambas muestras son homogéneas.
+
 
 Aplicaremos la prueba **t de Student** para comprobar si tenemos diferencias estadísticamente significativas en la media de la calidad de ambos grupos de vinos.
 
