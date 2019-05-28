@@ -150,7 +150,12 @@ ggplot(totalData, aes(x=tipo, y=diox_azufre_total)) +  geom_point(size=2, shape=
 
 # Análisis de los datos
 
+A continuación vamos a realizar un análisis descriptivo de la  variable calidad.  
+
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
+summary(totalData$calidad)
+#desviacion estandara
+sd(totalData$calidad)
 
 # mostramos un histograma de la calidad
 ggplot(data = totalData[1:filas,],aes(x=calidad))+geom_histogram()+ geom_density(alpha=.2, fill="#FF6666") 
@@ -193,30 +198,86 @@ fligner.test(calidad ~ tipo, data= totalData)
 ```
 Dado que el p-valor es > 0.05 podemos aceptar la hipóstesis nula de que las varianzas de ambas muestras son homogéneas.
 
+# Pruebas estadísticas
 
-Aplicaremos la prueba **t de Student** para comprobar si tenemos diferencias estadísticamente significativas en la media de la calidad de ambos grupos de vinos.
+## ¿Que tipo de vino tiene más calidad?
 
+En los histogramas y gráficos de frecuencias pudimos observar que la calidad de los vinos blancos de la muestra era más alta que la de los tintos, vamos a realizar un contraste de hipótesis para comprobar si tenemos diferencias estadísticamente significativas en la media de la calidad de ambos grupos de vinos.
+
+Considerando el análisis de la normalidad y homogeneidad de la varianza del punto anterior, aplicaremos la prueba **t de Student** formulando las siguientes hipótesis: 
+
+      H0: nuB - nuT = 0
+      H1: nuB - nuT > 0
+
+donde nuB es la media muestral de la calidad de los vinos blancos y nuT es la media muestral de la calidad de los vinos tintos.
 
 ```{r message= FALSE, warning=FALSE}
 ## Realizamos el test por tipo de vino
-t.test(calidad ~ tipo, data = totalData)
+t.test(calidad ~ tipo, data = totalData, alternative="greater")
 
 ```
-Dado que el p-valor es inferior al nivel de significancia, debemos rechazar la hipótesis nula, considerando que las medias de ambos grupos son distintas.
+Dado que el p-valor es inferior al nivel de significancia (0.05), debemos rechazar la hipótesis nula, por tanto podemos concluir que efectivamente, la calidad de los vinos blancos es superior que la de los vinos tintos de la muestra.
 
 
-# Métodos supervisados - Árboles de decisión
-## C4.5
+## ¿Qué prueba fisioquímica es más determinante para la calidad de un vino?
+
+Vamos a calcular la matriz de correlaciones de las variables cuantitativas de cada grupo de vinos.  
+
+```{r message= FALSE, warning=FALSE}
+round(cor(blanco[,-13]),2)
+
+```
+Observando la matriz de correlaciones vemos que las variables dioxido de azufre libre y ácido cítrico, no tienen prácticamente ninguna correlación con la calidad, podríamos sacarlas del modelo. Por el contrario, el alcohol y la densidad son las variables que más correlación tienen con la calidad, positiva y negativa respectivamente, aunque la correlación es más bien baja.
+
+Probamos la significancia de la correlación entre la calidad y el alcohol:
+
+     Hipótesis nula H0: no hay relación
+     Hipótesis alternativa H1: hay relación.
+
+```{r message= FALSE, warning=FALSE}
+cor.test(blanco$alcohol, blanco$calidad, method="pearson")
+```
+
+Comprobamos que el test nos arroja un p-value inferior a 0.05 por lo que rechazamos la hipótesis nula.
+
+Comprobamos que para la densidad también rechazamos la hipótesis nula.
+
+```{r message= FALSE, warning=FALSE}
+cor.test(blanco$densidad, blanco$calidad, method="pearson")
+
+```
+
+
+Obtenemos la matriz de correlaciones para el grupo de vinos tinto  
+
+```{r message= FALSE, warning=FALSE}
+
+round(cor(tinto[,-13]),2)
+
+```
+
+Tampoco obtenemos unas correlaciones altas por lo que consideramos que un modelo de regresión lineal no va a ser de utilidad para predecir la calidad de los vinos.
+
+
+## Métodos supervisados 
+### Árboles de decisión C4.5
 Vamos a construir un arbol de decisión mediante el algoritmo **C4.5** utilizando la biblioteca RWeka. 
 Comenzamos dividiendo la muestra en un dataset de entrenamiento y otro de prueba con una proporción de 70-30 sobre el total.  
 
 ```{r message= FALSE, warning=FALSE}
 library(RWeka)
 library(caret)
+library(rminer)
+set.seed(123)
 
 #con sample_frac obtenemos una muestra simple del 70% del dataset
-vino_entrenamiento <- sample_frac(totalData, .7)
-vino_prueba <- setdiff(totalData, vino_entrenamiento)
+#vino_entrenamiento <- sample_frac(totalData, .7)
+#vino_prueba <- setdiff(totalData, vino_entrenamiento)
+
+h <- holdout(totalData$tipo,ratio=2/3,mode="stratified")
+vino_entrenamiento <- totalData[h$tr,]
+vino_prueba <- totalData[h$ts,]
+
 summary(vino_entrenamiento$tipo)
 
 ```
@@ -225,10 +286,16 @@ En RWeka el algoritmo C4.5 se llama J48. Como se requiere que el atributo sea ca
 
 ```{r message= FALSE, warning=FALSE}
 
-# fit model
 resultJ48 <- J48(tipo~., vino_entrenamiento) 
 # Resumen del modelo
 summary(resultJ48)
+```
+
+Vemos que el resultado es excelente, el modelo nos clasifica los vinos con una precisión del 99.65% con un índice **kappa=0.99**   que nos indica que nuestra clasificación es un 99% mejor que una clasificación aleatoria.  
+
+Probamos el modelo con la muestra de prueba
+
+```{r message= FALSE, warning=FALSE}
 
 # predicciones
 predicciones <- predict(resultJ48, newdata = vino_prueba)
@@ -238,45 +305,9 @@ table(vino_prueba$tipo, predicciones)
 
 ```
 
-Vemos que el resultado es excelente, el modelo nos clasifica los vinos con una precisión del 99.6% con un índice **kappa=0.99*   que nos indica que nuestra clasificación es un 98,79% mejor que una clasificación aleatoria.  
+Vemos que ha clasificado bien un 98.9% de la muestra.
 
-Ahora vamos a clasificar los vinos en funcion de su calidad. Como el método que estamos usando requiere que la variable de clase sea categórica, factorizamos el atributo "calidad".
-
-```{r message= FALSE, warning=FALSE}
-
-# fit model
-resultJ48 <- J48(as.factor(calidad)~., vino_entrenamiento) 
-# Resumen del modelo
-summary(resultJ48)
-```
-
-Comprobamos que el modelo se ajusta peor, con una precisión del 88.34% y un índice kappa=82,47%.
-
-Vamos a comprobarlo con el set de prueba.
-
-```{r message= FALSE, warning=FALSE}
-# predicciones
-predicciones <- predict(resultJ48, newdata = vino_prueba)
-predicciones <- as.list.data.frame(predicciones)
-#analisis de las prediciones
-summary(predicciones)
-#analisis de los datos reales
-summary(vino_prueba$calidad)
-# precision del modelo. 
-table(vino_prueba$calidad, predicciones)
-
-# calculamos la media de los cuadrados de las desviaciones 
-dm <- function(actual, predicted){
-  mean((actual - predicted)^2)
-}
-
-error_C45 = dm(vino_prueba$calidad, predicciones)
-error_C45
-```
-
-Comprobamos que en este caso, los resultados son peores.  
-
-## CART
+### CART
 Ahora vamos a utilizar  un arbol de decisión para regresión y clasificación (**CART**) para predecir la calidad del vino en función de sus características.  
 
 ```{r message= FALSE, warning=FALSE}
@@ -311,7 +342,13 @@ rpart.plot(arbol_2)
 Vamos a evaluar el modelo contra los datos de prueba.  
 
 ```{r message= FALSE, warning=FALSE}
+# funcion que calcula la media de los cuadrados de las desviaciones 
+dm <- function(actual, predicted){
+  mean((actual - predicted)^2)
+}
+
 # Evaluacion del modelo
+
 prediccion_2 <- predict(arbol_2, newdata = vino_prueba,type = "vector")
 
 
@@ -324,13 +361,12 @@ summary( vino_prueba$calidad )
 
 #Podemos medir la calidad del modelo con la desviacion media
 errorCART = dm(vino_prueba$calidad, prediccion_2)
-errorCART
 
-cat("Error en la estimación del atributo calidad (C4.5, CART ): ", c(error_C45, errorCART))
+
+cat("Error en la estimación del atributo calidad: ", errorCART)
 
 ```
 
-Vemos que se comporta mucho mejor el método CART para estimar la calidad, que el metodo C4.5. En principio tiene sentido ya que el segundo realmente está clasificando las observaciones en un atributo factorizado.
 
 # Métodos no supervisados - Análisis de agregación.  
 ## K-means
