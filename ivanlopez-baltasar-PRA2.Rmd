@@ -29,32 +29,25 @@ En esta actividad se elabora un caso práctico, consistente en el tratamiento de
 
 ## Objetivos
 
-Aprender a aplicar los conocimientos adquiridos y su capacidad de resolución de problemas en entornos nuevos o poco conocidos dentro de contextos más amplios o multidisciplinares.
-Saber identificar los datos relevantes y los tratamientos necesarios (integración, limpieza y validación) para llevar a cabo un proyecto analítico.
-Aprender a analizar los datos adecuadamente para abordar la información contenida en los datos.
-Identificar la mejor representación de los resultados para aportar conclusiones sobre el problema planteado en el proceso analítico.
-Actuar con los principios éticos y legales relacionados con la manipulación de datos en función del ámbito de aplicación.
-Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida autodirigido o autónomo.
-Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos.
+* Aprender a aplicar los conocimientos adquiridos y su capacidad de resolución de problemas en entornos nuevos o poco conocidos dentro de contextos más amplios o multidisciplinares.  
+* Saber identificar los datos relevantes y los tratamientos necesarios (integración, limpieza y validación) para llevar a cabo un proyecto analítico.  
+* Aprender a analizar los datos adecuadamente para abordar la información contenida en los datos.
+* Identificar la mejor representación de los resultados para aportar conclusiones sobre el problema planteado en el proceso analítico.  
+* Actuar con los principios éticos y legales relacionados con la manipulación de datos en función del ámbito de aplicación.  
+* Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida autodirigido o autónomo.  
+* Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos.
  
 ## Competencias
 * Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
 * Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis  
 
 ## Descripcion del dataset 
-En ésta práctica vamos a trabajar con el juego de datos https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/ el cual contiene dos datasets, uno de vinos blancos y otro de vinos tintos. 
+En ésta práctica vamos a trabajar con el juego de datos de https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/ el cual contiene dos datasets, uno de vinos blancos y otro de vinos tintos. 
 
-Tenemos dos datasets, uno correspondiente a análisis de vinos blancos y el otro de vinos tintos. 
 Ambos datasets contienen 11 atributos de entrada, correspondientes a pruebas fisioquímicas, y uno de salida: "quality". 
 
+El objetivo del análisis será por un lado construir un modelo que nos pueda predecir la calidad de un vino, y por otro, construir un modelo que nos permita clasificar un vino en un determinado tipo (blanco/tinto).
 
-## Nota: Propiedad intelectual 
-
-Uso de paquete mclust:
-  Scrucca L., Fop M., Murphy T. B. and Raftery A. E. (2016) mclust 5:
-  clustering, classification and density estimation using Gaussian finite
-  mixture models The R Journal 8/1, pp. 205-233
-  
 
 ******
 # Carga y limpieza del dataset
@@ -256,90 +249,36 @@ round(cor(tinto[,-13]),2)
 
 ```
 
-Tampoco obtenemos unas correlaciones altas por lo que consideramos que un modelo de regresión lineal no va a ser de utilidad para predecir la calidad de los vinos.
+Tampoco obtenemos unas correlaciones altas de la calidad con el resto de variables, por lo que consideramos que un modelo de regresión lineal no va a ser de mucha utilidad para predecir la calidad de los vinos.
 
+## Regresion lineal
 
-## Métodos supervisados 
-### Árboles de decisión C4.5
-Vamos a construir un arbol de decisión mediante el algoritmo **C4.5** utilizando la biblioteca RWeka. 
-Comenzamos dividiendo la muestra en un dataset de entrenamiento y otro de prueba con una proporción de 70-30 sobre el total.  
+Partiendo del dataset de vinos blancos, vamos a hacer un análisis de regresión para estimar la calidad del vino.
+Nos quedamos solamente con el dataset de vinos blancos y le quitamos la variable de tipo.  
+```{r message= FALSE, warning=FALSE}
+blancoQ <- blanco[,1:12]
+str(blancoQ)
+```
+Vamos a dividir las observaciones en dos grupos, uno de entrenamiento para ajustar el modelo (2/3 de los datos) y uno de test (1/3 de los datos)  
 
 ```{r message= FALSE, warning=FALSE}
-library(RWeka)
-library(caret)
 library(rminer)
 set.seed(123)
+h <- holdout(blancoQ$calidad,ratio=2/3,mode="stratified")
+training <- blancoQ[h$tr,]
+test <- blancoQ[h$ts,]
+str(training)
+str(test)
+#training <- sample_frac(blancoQ, .7)
+#test <- setdiff(blancoQ, training)
 
-#con sample_frac obtenemos una muestra simple del 70% del dataset
-#vino_entrenamiento <- sample_frac(totalData, .7)
-#vino_prueba <- setdiff(totalData, vino_entrenamiento)
-
-h <- holdout(totalData$tipo,ratio=2/3,mode="stratified")
-vino_entrenamiento <- totalData[h$tr,]
-vino_prueba <- totalData[h$ts,]
-
-summary(vino_entrenamiento$tipo)
-
+modelo <- lm(calidad ~ ., data = training)
+summary(modelo)
 ```
 
-En RWeka el algoritmo C4.5 se llama J48. Como se requiere que el atributo sea categórico, vamos a clasificar los vinos por tipo (Blanco o Tinto).  
+Vemos que el valor R2 ajustado es bajo, 0.2797 por lo que el modelo no es capaz de predecir con precisión la calidad.
 
-```{r message= FALSE, warning=FALSE}
-
-resultJ48 <- J48(tipo~., vino_entrenamiento) 
-# Resumen del modelo
-summary(resultJ48)
-```
-
-Vemos que el resultado es excelente, el modelo nos clasifica los vinos con una precisión del 99.65% con un índice **kappa=0.99**   que nos indica que nuestra clasificación es un 99% mejor que una clasificación aleatoria.  
-
-Probamos el modelo con la muestra de prueba
-
-```{r message= FALSE, warning=FALSE}
-
-# predicciones
-predicciones <- predict(resultJ48, newdata = vino_prueba)
-
-# precision del modelo
-table(vino_prueba$tipo, predicciones)
-
-```
-
-Vemos que ha clasificado bien un 98.9% de la muestra.
-
-### CART
-Ahora vamos a utilizar  un arbol de decisión para regresión y clasificación (**CART**) para predecir la calidad del vino en función de sus características.  
-
-```{r message= FALSE, warning=FALSE}
-library(tidyverse)
-library(rpart)
-library(rpart.plot)
-
-```
-
-
-```{r message= FALSE, warning=FALSE}
-arbol_2 <- rpart(calidad ~ ., data = vino_entrenamiento,method  = "anova")
-arbol_2
-rpart.plot(arbol_2)
-```
-
-Se observa que para construir el árbol solo tiene en cuenta las variables alcohol y acidez volátil.
-
-```{r message= FALSE, warning=FALSE}
-plotcp(arbol_2)
-printcp(arbol_2)
-```
-
-Realizamos una poda  
-
-```{r message= FALSE, warning=FALSE}
-arbol_2 <- prune(arbol_2, cp = 0.011000)
-rpart.plot(arbol_2)
-```
-
-
-Vamos a evaluar el modelo contra los datos de prueba.  
+Vamos a verificarlo calculando la MSE
 
 ```{r message= FALSE, warning=FALSE}
 # funcion que calcula la media de los cuadrados de las desviaciones 
@@ -347,146 +286,6 @@ dm <- function(actual, predicted){
   mean((actual - predicted)^2)
 }
 
-# Evaluacion del modelo
-
-prediccion_2 <- predict(arbol_2, newdata = vino_prueba,type = "vector")
-
-
-#resumen de la predicción
-summary(prediccion_2)
-#resumen de los datos reales
-summary( vino_prueba$calidad )
-
-#table(vino_prueba$calidad, prediccion_2)
-
-#Podemos medir la calidad del modelo con la desviacion media
-errorCART = dm(vino_prueba$calidad, prediccion_2)
-
-
-cat("Error en la estimación del atributo calidad: ", errorCART)
-
-```
-
-
-# Métodos no supervisados - Análisis de agregación.  
-## K-means
-Vamos a realizar un análisis de agregación. Cargamos  los datos y nos quedamos unicamente con las 11 columnas que contienen los test fisioquímicos
-```{r message= FALSE, warning=FALSE}
-x <- totalData[,1:11]
-
-```
-
-```{r echo=TRUE, message=FALSE, warning=FALSE}
-#
-#x_n <- as.data.frame(lapply(x[1:11], normalize))
-#comprobar la normalizacion con la variable alcohol
-summary(x)
-```
-
-Aunque el número de clusters debería ser 2, vamos a comprobar los resultados con varios valores.  
-
-```{r message= FALSE, warning=FALSE}
-library(cluster)
-
-
-d <- daisy(x) 
-resultados <- rep(0, 4)
-for (i in c(2,3,4))
-{
-  fit           <- kmeans(x, i)
-  y_cluster     <- fit$cluster
-  sk            <- silhouette(y_cluster, d)
-  resultados[i] <- mean(sk[,3])
-}
-```
-
-
-Mostramos en un gráfica los valores de las siluetas media de cada prueba para comprobar que número de clusters es el mejor.
-```{r message= FALSE, warning=FALSE}
-plot(2:4,resultados[2:4],type="o",col="blue",pch=0,xlab="Número de clusters",ylab="Silueta")
-
-```
-
-Ahora vamos a utilizar el método que ofrece la menor suma de los cuadrados de las distancias de los puntos de cada grupo con respecto a su centro (withinss), con la mayor separacion entre centros de grupos (betweenss)  
-```{r message= FALSE, warning=FALSE}
-resultados <- rep(0, 4)
-for (i in c(2,3,4))
-{
-  fit           <- kmeans(x, i)
-  resultados[i] <- fit$tot.withinss
-}
-plot(2:4,resultados[2:4],type="o",col="blue",pch=0,xlab="Número de clusters",ylab="tot.tot.withinss")
-```
-
-
-Con ambos métodos el mejor resultado se obtiene con k=2 tal y como era de esperar.
-
-Vamos a aplicar el algoritmo **K-means** con k=2  
-
-```{r message= FALSE, warning=FALSE}
-fit2       <- kmeans(x, 2,nstart = 50,iter.max = 15)
-y_cluster2 <- fit2$cluster
-```
-
-
-De la siguiente forma podemos visualizar para cada grupo de vinos, para que tipo ha sido clasificado y para cual deberia haber sido clasificado.
-
-```{r message= FALSE, warning=FALSE}
-plot( totalData[c(8,11)],col=fit2$cluster)
-
-plot( totalData[c(8,11)],col=totalData$tipo)
-
-plot( totalData[c(8,9)],col=fit2$cluster)
-plot( totalData[c(8,9)],col=totalData$tipo)
-
-plot( totalData[c(1,7)],col=fit2$cluster)
-plot( totalData[c(1,7)],col=totalData$tipo)
-```
-
-Comprobamos que la acidez fija y el dioxido de azufre total son buenos indicadores para diferenciar el tipo de vino, esto ya lo habíamos visto con el arbol de decisión del análisis previo*. Comprobamos que los cloruros y el dioxido de azufre total deben también ser buenos indicadores.
-
-* Varía de una ejecucion a otra!
-
-```{r message= FALSE, warning=FALSE}
-
-plot( totalData[c(5,7)],col=fit2$cluster)
-```
-
-Evaluación del modelo  
-
-```{r message= FALSE, warning=FALSE}
-table(fit2$cluster,totalData$tipo)
-```
-
-Obtenemos el porcentaje de precisión del modelo
-```{r message= FALSE, warning=FALSE}
-100*(3622+1513)/(6494)
-```
-De lo que se obtiene una precisión del 79.07, que es aceptable aunque inferior a la obtenida con el arbol de decisión CART.
-
-
-
-#Regresion lineal
-
-Partiendo del dataset de vinos blancos, vamos a hacer un análisis de regresión para estimar la calidad del vino.
-```{r message= FALSE, warning=FALSE}
-blancoQ <- blanco[,1:12]
-str(blancoQ)
-```
-Vamos a dividir las observaciones en dos grupos, uno de entrenamiento para ajustar el modelo (70% de los datos) y uno de test (30% de los datos)  
-
-```{r message= FALSE, warning=FALSE}
-training <- sample_frac(blancoQ, .7)
-test <- setdiff(blancoQ, training)
-
-modelo <- lm(calidad ~ ., data = training)
-summary(modelo)
-```
-
-Vemos que el valor R2 ajustado es bajo, 0.2977 por lo que el modelo no es capaz de predecir con precisión la calidad.
-Vamos a verificar
-
-```{r message= FALSE, warning=FALSE}
 # MSE empleando las observaciones de entrenamiento
 training_mse <- dm(modelo$fitted.values, training$calidad)
 training_mse
@@ -498,33 +297,31 @@ test_mse
 
 ```
 
-Vamos a generar otro modelo para predecir el nivel de alcohol. Quitamos el atributo calidad ya que no es un atributo fisioquímico del vino.  
+
+## Modelo supervisado
+
+### Clasificación. Random forest
+
+A continuación vamos a aplicar un método de clasificación random forest mediante una validación cruzada con 4 folds para clasificar los vinos en tintos o blancos.
 
 ```{r message= FALSE, warning=FALSE}
-blancoA <- blanco[,1:11]
-str(blancoA)
+library(caret)
 
-training <- sample_frac(blancoA, .7)
-test <- setdiff(blancoA, training)
 
-modelo <- lm(alcohol ~ ., data = training)
-summary(modelo)
+h <- holdout(totalData$tipo,ratio=2/3,mode="stratified")
+vino_entrenamiento <- totalData[h$tr,]
+vino_prueba <- totalData[h$ts,]
+
+train_control <-trainControl(method = "cv", number = 4)
+mod<-train(tipo~., data=vino_entrenamiento, method="rf",trControl=train_control)
+pred <- predict(mod, newdata=vino_prueba)
 ```
 
-En este caso, el valor R2 ajustado es alto, 0.8579 por lo que el modelo en este caso sí es capaz de predecir con exactitud el nivel de alcohol del vino.
-
-Comprobamos cómo de bueno es el modelo prediciendo nuevas observaciones que no han participado en ajuste. La estimación del error de predicción se obtiene mediante el Mean Square Error (MSE).
-
+Obtenemos la matriz de confusión para comprobar la bondad del modelo.  
 ```{r message= FALSE, warning=FALSE}
-# MSE empleando las observaciones de entrenamiento
-training_mse <- dm(modelo$fitted.values, training$alcohol)
-training_mse
-
-# MSE empleando nuevas observaciones
-predicciones <- predict(modelo, newdata = test)
-test_mse <- dm(predicciones, test$alcohol)
-test_mse
+confusionMatrix(pred,vino_prueba$tipo, positive="T")
 ```
 
-Se puede observar que el modelo tiene un MSE muy bajo tanto en las predicciones con las observaciones de entrenamiento como las nuevas observaciones, incluso más bajo en las segundas por lo que podríamos decir que el modelo es útil para predecir la graduación de alcohol de un vino.
+Vemos que el resultado es excelente, el modelo nos clasifica los vinos con una precisión del 99.45% con un índice **kappa=0.985**   que nos indica que nuestra clasificación es un 98.5% mejor que una clasificación aleatoria.  
 
+# Conclusiones
