@@ -3,9 +3,6 @@ title: 'Tipología y ciclo de vida de los datos: PRA2'
 author: "Autor: Iván López-Baltasar Benito | David Quiles Gómez"
 date: "Junio 2019"
 output:
-  pdf_document:
-    highlight: zenburn
-    toc: yes
   html_document:
     highlight: default
     number_sections: yes
@@ -13,6 +10,10 @@ output:
     toc: yes
     toc_depth: 2
     includes:
+  pdf_document:
+    highlight: zenburn
+    latex_engine: xelatex
+    toc: yes
   word_document: default
 ---
 
@@ -191,6 +192,112 @@ fligner.test(calidad ~ tipo, data= totalData)
 ```
 Dado que el p-valor es > 0.05 podemos aceptar la hipóstesis nula de que las varianzas de ambas muestras son homogéneas.
 
+Comprobamos la normalidad del resto de variables numéricas mediante el tes de **Shapiro Wilk** 
+```{r message= FALSE, warning=FALSE}
+##
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$acidez_fija)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$acidez_fija)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$acidez_volatil)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$acidez_volatil)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$acido_citrico)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$acido_citrico)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$azucar_residual)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$azucar_residual)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$cloruros)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$cloruros)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$diox_azufre_libre)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$diox_azufre_libre)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$diox_azufre_total)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$diox_azufre_total)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$densidad)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$densidad)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$pH)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$pH)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$sulfatos)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$sulfatos)
+
+#ks.test(tinto$calidad, pnorm, mean(tinto$calidad), sd(tinto$calidad))
+shapiro.test(tinto$alcohol)
+#ks.test(blanco$calidad, pnorm, mean(blanco$calidad), sd(blanco$calidad))
+shapiro.test(blanco$alcohol)
+
+```
+El resultado de los tests nos indica que debemos rechazar la hipótesis nula, por lo que las variables no vienen de una distribución normal. No obstante, al igual que hicimos con la calidad, vamos considerar la normalidad basandonos en el **teorema central del límite**
+
+Vamos a comprobar la homogeneidad de la varianza al resto de variables numéricas el **test de Flinger-Killen** en cuanto a los grupos conformados por los vinos tintos y los blancos.  
+
+```{r message= FALSE, warning=FALSE}
+##
+fligner.test(acidez_fija ~ tipo, data= totalData)
+fligner.test(acidez_volatil ~ tipo, data= totalData)
+fligner.test(acido_citrico ~ tipo, data= totalData)
+fligner.test(azucar_residual ~ tipo, data= totalData)
+fligner.test(cloruros ~ tipo, data= totalData)
+fligner.test(diox_azufre_libre ~ tipo, data= totalData)
+fligner.test(diox_azufre_total ~ tipo, data= totalData)
+fligner.test(densidad ~ tipo, data= totalData)
+fligner.test(pH ~ tipo, data= totalData)
+fligner.test(sulfatos ~ tipo, data= totalData)
+fligner.test(alcohol ~ tipo, data= totalData)
+
+```
+
+
+Vamos ahora a considerar la Calidad como una variable categórica y a comprobar la homogeneidad de la varianza del resto de variables por Calidad.
+```{r message= FALSE, warning=FALSE}
+##
+datos2 <- totalData
+datos2$calidadFactor<-as.factor(totalData$calidad)
+```
+
+Comprobamos la homogeneidad de la varianza de todas las variables numéricas en cuanto a los grupos conformados por la calidad.
+```{r message= FALSE, warning=FALSE}
+##
+fligner.test(acidez_fija ~ calidadFactor, data= datos2)
+fligner.test(acidez_volatil ~ calidadFactor, data= datos2)
+fligner.test(acido_citrico ~ calidadFactor, data= datos2)
+fligner.test(azucar_residual ~ calidadFactor, data= datos2)
+fligner.test(cloruros ~ calidadFactor, data= datos2)
+fligner.test(diox_azufre_libre ~ calidadFactor, data= datos2)
+fligner.test(diox_azufre_total ~ calidadFactor, data= datos2)
+fligner.test(densidad  ~ calidadFactor, data= datos2)
+fligner.test(pH ~ calidadFactor, data= datos2)
+fligner.test(sulfatos  ~ calidadFactor, data= datos2)
+fligner.test(alcohol ~ calidadFactor, data= datos2)
+
+```
+
+Comprobamos como la acidez fija, con un *p-value=0.1166 > 0.05*, no presenta diferencias significativas si agrupamos las muestras por calidad.
+
 # Pruebas estadísticas
 
 ## ¿Que tipo de vino tiene más calidad?
@@ -213,6 +320,17 @@ Dado que el p-valor es inferior al nivel de significancia (0.05), debemos rechaz
 
 
 ## ¿Qué prueba fisioquímica es más determinante para la calidad de un vino?
+
+Con los resultados de la homogeneidad de la varianza obtenidos en el punto anterior, vamos a realizar contrastes de hipótesis para ver qué variables influyen más en la calidad por presentar diferencias significativas según su calidad.
+
+```{r message= FALSE, warning=FALSE}
+## Realizamos el test por tipo de vino
+##t.test(acidez_volatil ~ calidadFactor, data = datos2)
+summary(datos2$calidadFactor)
+summary(datos2)
+```
+
+
 
 Vamos a calcular la matriz de correlaciones de las variables cuantitativas de cada grupo de vinos.  
 
