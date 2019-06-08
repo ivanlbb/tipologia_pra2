@@ -86,18 +86,6 @@ summary(tinto)
 
 
 
-Podemos ver como tenemos algunos valores a cero, que no son nulos,  en el atributo acido_citrico que además está presente tanto en los vinos tintos como en los blancos. Vamos a obtener cuantos valores a 0 tenemos y consultar con una fuente externa  (https://www.aprenderdevino.es/acidos-acidez-vino/) si este valor representa un error o es un valor correcto.  
-
-```{r contar nulos}
-
-a <- sum(blanco$acido_citrico==0)
-b <- sum(tinto$acido_citrico==0)
-sprintf("Número de muestras de vinos blancos con el ácido cítrico = 0 : %s",a)
-sprintf("Número de muestras de vinos tintos con el ácido cítrico = 0 : %s",b)
-
-```
-
-Según la fuente externa consultada, los niveles habituales de acido cítrico en los vinos oscila entre 0 y 0,5. Este acido es otro más que está presente en gran cantidad de vinos pero no es extraño que el valor sea cero o que también esté por encima de 0.5, por tanto consideramos los valores como correctos.
 
 
 Ahora unimos ambos datasets
@@ -121,11 +109,25 @@ Comprobamos que no haya valores vacíos o nulos.
 colSums(is.na(totalData))
 colSums(totalData=="")
 ```
+
+Podemos ver como tenemos algunos valores a cero, en el atributo acido_citrico que además está presente tanto en los vinos tintos como en los blancos. Vamos a obtener cuantos valores a 0 tenemos y consultar con una fuente externa  (https://www.aprenderdevino.es/acidos-acidez-vino/) si este valor representa un error o es un valor correcto.  
+
+```{r contar nulos}
+
+a <- sum(blanco$acido_citrico==0)
+b <- sum(tinto$acido_citrico==0)
+sprintf("Número de muestras de vinos blancos con el ácido cítrico = 0 : %s",a)
+sprintf("Número de muestras de vinos tintos con el ácido cítrico = 0 : %s",b)
+
+```
+
+Según la fuente externa consultada, los niveles habituales de acido cítrico en los vinos oscila entre 0 y 0,5. Este acido es otro más que está presente en gran cantidad de vinos pero no es extraño que el valor sea cero o que también esté por encima de 0.5, por tanto consideramos los valores como correctos.
+
 ## Valores extremos
 
 Vamos a realizar el análisis de cada una de las variables cualitativas del dataset. Para determinar si los outliers son valores correctos o no, nos apoyaremos en algunas fuentes externas que nos ayudarán a eliminar aquellos valores que concluyamos que no son correctos. 
 
-Comenzamos por realizar una gráfico **boxplot** para cada tipo de vino y variable. 
+Comenzamos por realizar un gráfico **boxplot** para cada tipo de vino y variable. 
 
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
