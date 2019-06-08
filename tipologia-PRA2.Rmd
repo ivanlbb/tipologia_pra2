@@ -683,10 +683,12 @@ Obtenemos la matriz de confusión para comprobar la bondad del modelo.
 confusionMatrix(pred,vino_prueba$calidad)
 ```
 
-El método random forest 
+Tal y como sucedía con el modelo de regresión lineal, el modelo random forest no tiene mucha precisión y  
 
 
 # Conclusiones
-Se han realizado varias pruebas estadísticas con el objetivo de inferir la calidad de los vinos y de clasificarlos en los grupos Tinto y Blanco tal y como se había planteado al principio.
+Se han realizado varias pruebas estadísticas con el objetivo de inferir la calidad de los vinos y de clasificarlos por tipo Tinto y Blanco tal y como se había planteado al principio. No hemos conseguido ningún modelo que nos permita inferir la calidad con mucha precisión aunque sí clasificar los vinos por tipo.
+
+De los análisis realizados también se ha podido concluir que los vinos que pertenecen al tipo de vinos blanco tienen más calidad que las de los vinos tintos.
 
 
