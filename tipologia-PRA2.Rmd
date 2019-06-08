@@ -687,7 +687,7 @@ Obtenemos la matriz de confusión para comprobar la bondad del modelo.
 confusionMatrix(pred,vino_prueba$calidad)
 ```
 
-Tal y como sucedía con el modelo de regresión lineal, el modelo random forest no tiene mucha precisión y  
+Tal y como sucedía con el modelo de regresión lineal, el modelo random forest no nos da una precisión muy alta (67.07%) clasificando por calidad.
 
 
 # Conclusiones
