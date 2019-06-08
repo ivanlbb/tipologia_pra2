@@ -101,6 +101,8 @@ str(totalData)
 summary(totalData)
 ```
 
+
+
 ## Nulos y/o elementos vacíos
 Comprobamos que no haya valores vacíos o nulos.
 
@@ -169,7 +171,7 @@ datos.bp <-boxplot(tinto$alcohol, main="Tintos - Alcohol", horizontal = T)
 
 ```
 
-A modo de ejemplo, se muestra la cantidad de Outliers de dos variables. 
+A modo de ejemplo, se muestran los outliers de dos variables:  
 
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
@@ -396,10 +398,10 @@ En los histogramas y gráficos de frecuencias pudimos observar que la calidad de
 
 Considerando el análisis de la normalidad y homogeneidad de la varianza del punto anterior, aplicaremos la prueba **t de Student** formulando las siguientes hipótesis: 
 
-      H0: nuB - nuT = 0
-      H1: nuB - nuT > 0
+      H0: µB - µT = 0
+      H1: µB - µT > 0
 
-donde nuB es la media muestral de la calidad de los vinos blancos y nuT es la media muestral de la calidad de los vinos tintos.
+donde µB es la media muestral de la calidad de los vinos blancos y µT es la media muestral de la calidad de los vinos tintos.
 
 ```{r message= FALSE, warning=FALSE}
 ## Realizamos el test por tipo de vino
