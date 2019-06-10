@@ -61,8 +61,8 @@ library(dplyr)
 ```
 
 ```{r message= FALSE, warning=FALSE}
-blanco<-read.csv("vinos/winequality-white.csv", header=T, sep=";")
-tinto<-read.csv("vinos/winequality-red.csv", header=T, sep=";")
+blanco<-read.csv("datos/winequality-white.csv", header=T, sep=";")
+tinto<-read.csv("datos/winequality-red.csv", header=T, sep=";")
 
 ```
 
@@ -699,3 +699,12 @@ En cuanto a los métodos de clasificación, sí que podemos concluir que las car
 También se ha realizado un contraste de hipótesis mediante el cual se ha podido concluir que los vinos que pertenecen al tipo de vinos blanco tienen más calidad que las de los vinos tintos.
 
 
+# Contribuciones
+```{r message= FALSE, warning=FALSE}
+# Contribuciones
+firma <-"Iván López-Baltasar, David Quiles"
+matriz <-matrix(c("Investigación previa",firma, "Redacción de las respuestas",firma,"Desarrollo código",firma),nrow =3, ncol=2, byrow=TRUE)
+colnames(matriz) <- c( "Contribuciones","Firma")
+print(matriz)
+
+```
