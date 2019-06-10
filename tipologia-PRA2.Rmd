@@ -3,6 +3,10 @@ title: 'Tipología y ciclo de vida de los datos: PRA2'
 author: "Autor: Iván López-Baltasar Benito | David Quiles Gómez"
 date: "Junio 2019"
 output:
+  pdf_document:
+    highlight: zenburn
+    latex_engine: xelatex
+    toc: yes
   html_document:
     highlight: default
     number_sections: yes
@@ -10,10 +14,6 @@ output:
     toc: yes
     toc_depth: 2
     includes:
-  pdf_document:
-    highlight: zenburn
-    latex_engine: xelatex
-    toc: yes
   word_document: default
 ---
 
@@ -691,8 +691,11 @@ Tal y como sucedía con el modelo de regresión lineal, el modelo random forest 
 
 
 # Conclusiones
-Se han realizado varias pruebas estadísticas con el objetivo de inferir la calidad de los vinos y de clasificarlos por tipo Tinto y Blanco tal y como se había planteado al principio. No hemos conseguido ningún modelo que nos permita inferir la calidad con mucha precisión aunque sí clasificar los vinos por tipo.
+Se han realizado varias pruebas estadísticas con el objetivo de inferir la calidad de los vinos y de clasificarlos por tipo Tinto y Blanco tal y como se había planteado al principio. Para inferir la calidad de los vinos se han realizado modelos de regresión cuyos resultados no han sido del todo satisfactorios. Posteriormente se ha factorizado la calidad para construir un modelo random forest con el que clasificar los vinos por calidad aunque tampoco se ha obtenido mucha precisión en el modelo. Por lo tanto, podemos concluir que las características fisioquímicas de los vinos no son un buen indicador para medir la calidad de un vino. 
 
-De los análisis realizados también se ha podido concluir que los vinos que pertenecen al tipo de vinos blanco tienen más calidad que las de los vinos tintos.
+En cuanto a los métodos de clasificación, sí que podemos concluir que las características fisioquímicas nos permiten clasificar con gran precisión entre los tipos de vino.
+
+
+También se ha realizado un contraste de hipótesis mediante el cual se ha podido concluir que los vinos que pertenecen al tipo de vinos blanco tienen más calidad que las de los vinos tintos.
 
 
